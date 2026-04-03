@@ -1,0 +1,1 @@
+ C:\\Users\\natou\\Documents\\GitHub\\Elite\\build\\web\\manifest.json:  C:\\Users\\natou\\Documents\\GitHub\\Elite\\web\\index.html C:\\Users\\natou\\Documents\\GitHub\\Elite\\web\\manifest.json

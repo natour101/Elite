@@ -1,0 +1,11 @@
+{
+  "name": "Elite Luxury Store",
+  "short_name": "Elite",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#0A0A0A",
+  "description": "Luxury original brands storefront.",
+  "orientation": "portrait-primary",
+  "icons": []
+}
