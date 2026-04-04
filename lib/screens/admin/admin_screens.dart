@@ -169,6 +169,18 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                                   }
                                   return;
                                 }
+                                final session =
+                                    await ref.read(authSessionProvider.future);
+                                if (!session.isAdmin) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('لم يتم اعتماد جلسة الأدمن بعد.'),
+                                      ),
+                                    );
+                                  }
+                                  return;
+                                }
                                 if (mounted) context.go('/admin/dashboard');
                               },
                         child: Text(actionState.isLoading ? 'جاري تسجيل الدخول...' : 'دخول'),

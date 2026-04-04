@@ -2,22 +2,44 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../core/constants/app_constants.dart';
 
+class AdminAuthSession {
+  const AdminAuthSession({
+    required this.isAuthenticated,
+    required this.isAdmin,
+    this.email,
+    this.user,
+  });
+
+  final bool isAuthenticated;
+  final bool isAdmin;
+  final String? email;
+  final User? user;
+
+  factory AdminAuthSession.fromUser(User? user) {
+    final email = user?.email;
+    final isAdmin = email != null &&
+        email.toLowerCase() == AppConstants.adminEmail.toLowerCase();
+    return AdminAuthSession(
+      isAuthenticated: user != null,
+      isAdmin: isAdmin,
+      email: email,
+      user: user,
+    );
+  }
+}
+
 class AuthService {
   AuthService(this._auth);
 
   final FirebaseAuth _auth;
 
-  Stream<User?> authStateChanges() => _auth.authStateChanges();
+  Stream<AdminAuthSession> authStateChanges() {
+    return _auth.userChanges().map(AdminAuthSession.fromUser);
+  }
 
   User? get currentUser => _auth.currentUser;
 
-  bool get isCurrentUserAdmin {
-    final email = _auth.currentUser?.email;
-    return email != null &&
-        email.toLowerCase() == AppConstants.adminEmail.toLowerCase();
-  }
-
-  Future<void> signInAdmin({
+  Future<AdminAuthSession> signInAdmin({
     required String email,
     required String password,
   }) async {
@@ -26,16 +48,16 @@ class AuthService {
       password: password,
     );
 
-    final signedEmail = credential.user?.email;
-    final isAdmin = signedEmail != null &&
-        signedEmail.toLowerCase() == AppConstants.adminEmail.toLowerCase();
-    if (!isAdmin) {
+    final session = AdminAuthSession.fromUser(credential.user);
+    if (!session.isAdmin) {
       await _auth.signOut();
       throw FirebaseAuthException(
         code: 'not-admin',
         message: 'هذا الحساب لا يملك صلاحيات الأدمن.',
       );
     }
+
+    return session;
   }
 
   Future<void> signOut() => _auth.signOut();

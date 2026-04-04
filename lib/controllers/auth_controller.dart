@@ -13,12 +13,12 @@ final authServiceProvider = Provider<AuthService>((ref) {
   return AuthService(ref.watch(firebaseAuthProvider));
 });
 
-final authStateProvider = StreamProvider<User?>((ref) {
+final authSessionProvider = StreamProvider<AdminAuthSession>((ref) {
   return ref.watch(authServiceProvider).authStateChanges();
 });
 
 final adminStatusProvider = Provider<bool>((ref) {
-  return ref.watch(authServiceProvider).isCurrentUserAdmin;
+  return ref.watch(authSessionProvider).valueOrNull?.isAdmin ?? false;
 });
 
 class AuthActionController extends AsyncNotifier<void> {

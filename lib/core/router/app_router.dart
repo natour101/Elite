@@ -11,8 +11,7 @@ enum AppEntry { storefront, admin }
 
 final appRouterProvider = Provider.family<GoRouter, AppEntry>((ref, entry) {
   if (entry == AppEntry.admin) {
-    final authState = ref.watch(authStateProvider);
-    final isAdmin = ref.watch(adminStatusProvider);
+    final session = ref.watch(authSessionProvider);
 
     return GoRouter(
       initialLocation: '/admin/dashboard',
@@ -20,7 +19,9 @@ final appRouterProvider = Provider.family<GoRouter, AppEntry>((ref, entry) {
         ref.watch(authServiceProvider).authStateChanges(),
       ),
       redirect: (context, state) {
-        final loggedIn = authState.valueOrNull != null;
+        final currentSession = session.valueOrNull;
+        final loggedIn = currentSession?.isAuthenticated ?? false;
+        final isAdmin = currentSession?.isAdmin ?? false;
         final loggingIn = state.matchedLocation == '/admin/login';
 
         if (!loggedIn) {
