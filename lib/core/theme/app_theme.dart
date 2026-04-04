@@ -42,9 +42,9 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF141414),
-        hintStyle: const TextStyle(color: Colors.white54),
-        labelStyle: const TextStyle(color: Colors.white70),
+        fillColor: const Color(0xFFF6F1E8),
+        hintStyle: const TextStyle(color: Colors.black45),
+        labelStyle: const TextStyle(color: Colors.black87),
         prefixIconColor: AppTheme.gold,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),

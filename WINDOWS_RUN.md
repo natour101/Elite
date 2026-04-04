@@ -1,52 +1,53 @@
-# تشغيل نسخة PC
+# Windows Run
 
-هذا المشروع يفتح **لوحة الإدارة** تلقائيًا على Windows Desktop.
+This project opens the **Admin Dashboard** automatically on Windows Desktop.
 
-## المطلوب قبل التشغيل
+## Requirements
 
-1. ثبّت Flutter SDK
-2. تأكد أن الأمر `flutter` يعمل من PowerShell
-3. افتح المشروع من هذا المسار:
+1. Install Flutter SDK
+2. Make sure `flutter` works in PowerShell
+3. Open the project from:
 
 ```powershell
 C:\Users\natou\Documents\GitHub\Elite
 ```
 
-## أسهل طريقة
-
-لتشغيل برنامج الـ PC:
+## Quick run
 
 ```powershell
 .\run_windows.ps1
 ```
 
-لبناء نسخة EXE:
+## Build EXE
 
 ```powershell
 .\run_windows.ps1 -Mode build
 ```
 
-## إذا أردت الأوامر يدويًا
-
-أول مرة فقط:
+## Manual commands
 
 ```powershell
 flutter create . --platforms=windows,web
 flutter pub get
-```
-
-ثم للتشغيل:
-
-```powershell
 flutter run -d windows
 ```
 
-وللبناء:
+## Release build
 
 ```powershell
 flutter build windows --release
 ```
 
-## ملاحظة
+The EXE will usually be created under:
 
-إذا لم تكن ملفات Windows موجودة، فالسكربت `run_windows.ps1` سيولدها تلقائيًا ثم يكمل التشغيل أو البناء.
+```powershell
+build\windows\x64\runner\Release
+```
+
+## If PowerShell blocks the script
+
+Run this once in the same terminal:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+```

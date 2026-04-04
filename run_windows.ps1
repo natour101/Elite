@@ -7,7 +7,7 @@ $ErrorActionPreference = "Stop"
 
 function Require-Command($name) {
   if (-not (Get-Command $name -ErrorAction SilentlyContinue)) {
-    throw "لم يتم العثور على الأمر '$name'. ثبّت Flutter وأضفه إلى PATH أولًا."
+    throw "Command '$name' was not found. Install Flutter and add it to PATH first."
   }
 }
 
