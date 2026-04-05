@@ -695,6 +695,7 @@ file:///C:/Users/natou/Documents/GitHub/Elite/lib/app/elite_app.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/controllers/auth_controller.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/controllers/cart_controller.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/controllers/dashboard_controller.dart
+file:///C:/Users/natou/Documents/GitHub/Elite/lib/controllers/mediator_portal_controller.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/controllers/mediators_controller.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/controllers/orders_controller.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/controllers/products_controller.dart
@@ -708,12 +709,16 @@ file:///C:/Users/natou/Documents/GitHub/Elite/lib/models/cart_item.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/models/mediator.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/models/mediators_stats.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/models/product.dart
+file:///C:/Users/natou/Documents/GitHub/Elite/lib/models/publication_request.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/screens/admin/admin_screens.dart
+file:///C:/Users/natou/Documents/GitHub/Elite/lib/screens/desktop/desktop_login_screen.dart
+file:///C:/Users/natou/Documents/GitHub/Elite/lib/screens/mediator/mediator_screens.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/screens/store/store_screens.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/services/auth_service.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/services/mediators_service.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/services/orders_service.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/services/products_service.dart
+file:///C:/Users/natou/Documents/GitHub/Elite/lib/services/publication_requests_service.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/widgets/app_scaffold_bits.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/widgets/async_value_builder.dart
 file:///C:/src/flutter/bin/cache/dart-sdk/lib/libraries.json
