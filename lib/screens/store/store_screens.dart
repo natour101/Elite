@@ -49,7 +49,7 @@ class StoreHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AsyncValueBuilder<List<Product>>(
-      value: ref.watch(productsProvider),
+      value: ref.watch(storefrontProductsProvider),
       data: (products) {
         if (products.isEmpty) {
           return const EmptyState(
@@ -108,7 +108,7 @@ class ProductDetailsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AsyncValueBuilder<List<Product>>(
-      value: ref.watch(productsProvider),
+      value: ref.watch(storefrontProductsProvider),
       data: (products) {
         Product? product;
         for (final item in products) {
@@ -466,6 +466,25 @@ class _ProductPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (product.imageUrl.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Image.network(
+          product.imageUrl,
+          height: 160,
+          width: 320,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _fallbackPreview();
+          },
+        ),
+      );
+    }
+
+    return _fallbackPreview();
+  }
+
+  Widget _fallbackPreview() {
     return Container(
       height: 160,
       width: 320,

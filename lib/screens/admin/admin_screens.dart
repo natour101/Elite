@@ -76,7 +76,7 @@ class AdminShell extends ConsumerWidget {
                   ElevatedButton.icon(
                     onPressed: () async {
                       await ref.read(authActionControllerProvider.notifier).signOut();
-                      if (context.mounted) context.go('/admin/login');
+                      if (context.mounted) context.go('/desktop/login');
                     },
                     icon: const Icon(Icons.logout),
                     label: const Text('تسجيل الخروج'),
@@ -637,8 +637,10 @@ Future<void> _showProductDialog(BuildContext context, WidgetRef ref, {Product? p
   final descriptionController = TextEditingController(text: product?.description ?? '');
   final stockController = TextEditingController(text: product?.stock.toString() ?? '0');
   final imageController = TextEditingController(text: product?.imageUrl ?? '');
+  final mediatorCodeController = TextEditingController(text: product?.mediatorCode ?? '');
   final formKey = GlobalKey<FormState>();
   var isFeatured = product?.isFeatured ?? false;
+  var listingStatus = product?.listingStatus ?? 'active';
 
   await showDialog<void>(
     context: context,
@@ -668,6 +670,23 @@ Future<void> _showProductDialog(BuildContext context, WidgetRef ref, {Product? p
                       _requiredField(stockController, 'المخزون'),
                       const SizedBox(height: 12),
                       TextFormField(controller: imageController, decoration: const InputDecoration(labelText: 'رابط الصورة (اختياري)')),
+                      const SizedBox(height: 12),
+                      TextFormField(controller: mediatorCodeController, decoration: const InputDecoration(labelText: 'Mediator Code (optional)')),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: listingStatus,
+                        decoration: const InputDecoration(labelText: 'Listing Status'),
+                        items: const [
+                          DropdownMenuItem(value: 'active', child: Text('active')),
+                          DropdownMenuItem(value: 'reserved', child: Text('reserved')),
+                          DropdownMenuItem(value: 'sold', child: Text('sold')),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => listingStatus = value);
+                          }
+                        },
+                      ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: descriptionController,
@@ -706,6 +725,8 @@ Future<void> _showProductDialog(BuildContext context, WidgetRef ref, {Product? p
                           isFeatured: isFeatured,
                           price: double.tryParse(priceController.text.trim()),
                           imageUrl: imageController.text.trim(),
+                          mediatorCode: mediatorCodeController.text.trim(),
+                          listingStatus: listingStatus,
                         ),
                       );
                   if (context.mounted) Navigator.of(dialogContext).pop();

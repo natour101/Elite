@@ -18,6 +18,13 @@ final productsProvider = StreamProvider<List<Product>>((ref) {
   return ref.watch(productsServiceProvider).watchProducts();
 });
 
+final storefrontProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
+  final productsAsync = ref.watch(productsProvider);
+  return productsAsync.whenData(
+    (products) => products.where((product) => product.isVisibleOnStorefront).toList(),
+  );
+});
+
 class ProductFormData {
   const ProductFormData({
     required this.name,
@@ -31,10 +38,16 @@ class ProductFormData {
     this.imageUrl = '',
     this.id = '',
     this.createdAt,
+    this.mediatorId = '',
+    this.mediatorCode = '',
+    this.listingStatus = 'active',
   });
 
   final String id;
   final DateTime? createdAt;
+  final String mediatorId;
+  final String mediatorCode;
+  final String listingStatus;
   final String name;
   final String productNumber;
   final String category;
@@ -58,6 +71,9 @@ class ProductFormData {
       price: price,
       imageUrl: imageUrl,
       createdAt: createdAt ?? DateTime.now(),
+      mediatorId: mediatorId,
+      mediatorCode: mediatorCode.trim().toUpperCase(),
+      listingStatus: listingStatus,
     );
   }
 }
@@ -77,6 +93,23 @@ class ProductActionsController extends AsyncNotifier<void> {
     state = const AsyncLoading();
     state = await AsyncValue.guard(
       () => ref.read(productsServiceProvider).deleteProduct(id),
+    );
+  }
+
+  Future<void> updateStatus({
+    required String productId,
+    required String status,
+    String mediatorId = '',
+    String mediatorCode = '',
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(productsServiceProvider).updateProductStatus(
+            productId: productId,
+            status: status,
+            mediatorId: mediatorId,
+            mediatorCode: mediatorCode,
+          ),
     );
   }
 }

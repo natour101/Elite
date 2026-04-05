@@ -32,6 +32,24 @@ class MediatorsService {
             .toList());
   }
 
+  Future<MediatorProfile?> getMediatorByCode(String code) async {
+    final normalized = code.trim().toUpperCase();
+    final snapshot = await _mediators.where('code', isEqualTo: normalized).limit(1).get();
+    if (snapshot.docs.isEmpty) return null;
+    final doc = snapshot.docs.first;
+    return MediatorProfile.fromMap(doc.id, doc.data());
+  }
+
+  Future<void> updateMediatorBalance({
+    required String mediatorId,
+    required double currentBalance,
+  }) {
+    return _mediators.doc(mediatorId).set(
+      {'currentBalance': currentBalance},
+      SetOptions(merge: true),
+    );
+  }
+
   Future<void> saveMediator(MediatorProfile mediator) async {
     final normalizedCode = mediator.code.trim().toUpperCase();
     if (normalizedCode.length != 4) {

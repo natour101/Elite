@@ -8,6 +8,7 @@ class MediatorProfile {
     required this.phone,
     required this.code,
     required this.createdAt,
+    this.currentBalance = 0,
   });
 
   final String id;
@@ -16,6 +17,7 @@ class MediatorProfile {
   final String phone;
   final String code;
   final DateTime createdAt;
+  final double currentBalance;
 
   Map<String, dynamic> toMap() {
     return {
@@ -24,6 +26,7 @@ class MediatorProfile {
       'phone': phone,
       'code': code,
       'createdAt': Timestamp.fromDate(createdAt),
+      'currentBalance': currentBalance,
     };
   }
 
@@ -36,6 +39,7 @@ class MediatorProfile {
       phone: map['phone'] as String? ?? '',
       code: map['code'] as String? ?? '',
       createdAt: createdAt is Timestamp ? createdAt.toDate() : DateTime.now(),
+      currentBalance: (map['currentBalance'] as num?)?.toDouble() ?? 0,
     );
   }
 }
