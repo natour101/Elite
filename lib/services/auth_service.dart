@@ -15,6 +15,13 @@ class AdminAuthSession {
   final String? email;
   final User? user;
 
+  factory AdminAuthSession.unauthenticated() {
+    return const AdminAuthSession(
+      isAuthenticated: false,
+      isAdmin: false,
+    );
+  }
+
   factory AdminAuthSession.fromUser(User? user) {
     final email = user?.email;
     final isAdmin = email != null &&
@@ -32,12 +39,6 @@ class AuthService {
   AuthService(this._auth);
 
   final FirebaseAuth _auth;
-
-  Stream<AdminAuthSession> authStateChanges() {
-    return _auth.userChanges().map(AdminAuthSession.fromUser);
-  }
-
-  User? get currentUser => _auth.currentUser;
 
   Future<AdminAuthSession> signInAdmin({
     required String email,

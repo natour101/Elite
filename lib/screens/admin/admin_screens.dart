@@ -169,8 +169,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                                   }
                                   return;
                                 }
-                                final session =
-                                    await ref.read(authSessionProvider.future);
+                                final session = ref.read(authSessionProvider);
                                 if (!session.isAdmin) {
                                   if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(

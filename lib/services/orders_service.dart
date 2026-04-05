@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../core/constants/app_constants.dart';
+import '../core/utils/polling_stream.dart';
 import '../models/app_order.dart';
 
 class OrdersService {
@@ -12,12 +13,16 @@ class OrdersService {
       _firestore.collection(AppConstants.ordersCollection);
 
   Stream<List<AppOrder>> watchOrders() {
-    return _collection
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => AppOrder.fromMap(doc.id, doc.data()))
-            .toList());
+    return pollingListStream(_fetchOrders);
+  }
+
+  Future<List<AppOrder>> _fetchOrders() async {
+    final snapshot = await _collection.get();
+    final orders = snapshot.docs
+        .map((doc) => AppOrder.fromMap(doc.id, doc.data()))
+        .toList();
+    orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return orders;
   }
 
   Future<void> placeOrder(AppOrder order) async {

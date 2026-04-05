@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,15 +18,8 @@ final appRouterProvider = Provider.family<GoRouter, AppEntry>((ref, entry) {
 
     return GoRouter(
       initialLocation: '/desktop/login',
-      refreshListenable: _RouterRefreshStream(
-        StreamGroup.merge([
-          ref.watch(authServiceProvider).authStateChanges(),
-          ref.watch(mediatorSessionProvider.notifier).stream,
-        ]),
-      ),
       redirect: (context, state) {
-        final currentSession = session.valueOrNull;
-        final isAdmin = currentSession?.isAdmin ?? false;
+        final isAdmin = session.isAdmin;
         final isMediatorLoggedIn = mediator != null;
         final path = state.matchedLocation;
 
@@ -122,36 +113,3 @@ final appRouterProvider = Provider.family<GoRouter, AppEntry>((ref, entry) {
     ],
   );
 });
-
-class _RouterRefreshStream extends ChangeNotifier {
-  _RouterRefreshStream(Stream<dynamic> stream) {
-    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
-  }
-
-  late final StreamSubscription<dynamic> _subscription;
-
-  @override
-  void dispose() {
-    _subscription.cancel();
-    super.dispose();
-  }
-}
-
-class StreamGroup {
-  static Stream<dynamic> merge(List<Stream<dynamic>> streams) {
-    final controller = StreamController<dynamic>.broadcast();
-    final subscriptions = <StreamSubscription<dynamic>>[];
-
-    for (final stream in streams) {
-      subscriptions.add(stream.listen(controller.add));
-    }
-
-    controller.onCancel = () async {
-      for (final subscription in subscriptions) {
-        await subscription.cancel();
-      }
-    };
-
-    return controller.stream;
-  }
-}

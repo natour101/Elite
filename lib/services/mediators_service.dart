@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../core/constants/app_constants.dart';
+import '../core/utils/polling_stream.dart';
 import '../models/mediator.dart';
 
 class DuplicateMediatorCodeException implements Exception {
@@ -24,17 +25,22 @@ class MediatorsService {
       _firestore.collection(AppConstants.mediatorCodesCollection);
 
   Stream<List<MediatorProfile>> watchMediators() {
-    return _mediators
-        .orderBy('name')
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => MediatorProfile.fromMap(doc.id, doc.data()))
-            .toList());
+    return pollingListStream(_fetchMediators);
+  }
+
+  Future<List<MediatorProfile>> _fetchMediators() async {
+    final snapshot = await _mediators.get();
+    final mediators = snapshot.docs
+        .map((doc) => MediatorProfile.fromMap(doc.id, doc.data()))
+        .toList();
+    mediators.sort((a, b) => a.name.compareTo(b.name));
+    return mediators;
   }
 
   Future<MediatorProfile?> getMediatorByCode(String code) async {
     final normalized = code.trim().toUpperCase();
-    final snapshot = await _mediators.where('code', isEqualTo: normalized).limit(1).get();
+    final snapshot =
+        await _mediators.where('code', isEqualTo: normalized).limit(1).get();
     if (snapshot.docs.isEmpty) return null;
     final doc = snapshot.docs.first;
     return MediatorProfile.fromMap(doc.id, doc.data());

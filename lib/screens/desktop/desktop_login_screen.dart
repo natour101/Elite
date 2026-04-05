@@ -130,8 +130,7 @@ class _DesktopLoginScreenState extends ConsumerState<DesktopLoginScreen> {
                                               return;
                                             }
 
-                                            final session = await ref
-                                                .read(authSessionProvider.future);
+                                            final session = ref.read(authSessionProvider);
                                             if (session.isAdmin && mounted) {
                                               context.go('/admin/dashboard');
                                             }

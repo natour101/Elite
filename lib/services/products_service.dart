@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../core/constants/app_constants.dart';
+import '../core/utils/polling_stream.dart';
 import '../models/product.dart';
 
 class ProductsService {
@@ -12,26 +13,31 @@ class ProductsService {
       _firestore.collection(AppConstants.productsCollection);
 
   Stream<List<Product>> watchProducts() {
-    return _collection.snapshots().map((snapshot) {
-      final products = snapshot.docs
-          .map((doc) => Product.fromMap(doc.id, doc.data()))
-          .toList();
-      products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return products;
-    });
+    return pollingListStream(_fetchProducts);
   }
 
   Stream<List<Product>> watchMediatorProducts(String mediatorCode) {
-    return _collection
+    return pollingListStream(() => _fetchMediatorProducts(mediatorCode));
+  }
+
+  Future<List<Product>> _fetchProducts() async {
+    final snapshot = await _collection.get();
+    final products = snapshot.docs
+        .map((doc) => Product.fromMap(doc.id, doc.data()))
+        .toList();
+    products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return products;
+  }
+
+  Future<List<Product>> _fetchMediatorProducts(String mediatorCode) async {
+    final snapshot = await _collection
         .where('mediatorCode', isEqualTo: mediatorCode.toUpperCase())
-        .snapshots()
-        .map((snapshot) {
-      final products = snapshot.docs
-          .map((doc) => Product.fromMap(doc.id, doc.data()))
-          .toList();
-      products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return products;
-    });
+        .get();
+    final products = snapshot.docs
+        .map((doc) => Product.fromMap(doc.id, doc.data()))
+        .toList();
+    products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return products;
   }
 
   Future<void> saveProduct(Product product) async {

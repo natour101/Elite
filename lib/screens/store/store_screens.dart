@@ -23,8 +23,12 @@ class StoreShell extends ConsumerWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
+        backgroundColor: const Color(0xFFF7F4EE),
         appBar: AppBar(
-          title: const Text('Elite Store'),
+          title: const Text(
+            'Elite Store',
+            style: TextStyle(fontWeight: FontWeight.w900),
+          ),
           actions: [
             TextButton(
               onPressed: () => context.go('/'),
@@ -37,7 +41,7 @@ class StoreShell extends ConsumerWidget {
             const SizedBox(width: 12),
           ],
         ),
-        body: Container(color: const Color(0xFFF7F4EE), child: child),
+        body: child,
       ),
     );
   }
@@ -53,41 +57,76 @@ class StoreHomeScreen extends ConsumerWidget {
       data: (products) {
         if (products.isEmpty) {
           return const EmptyState(
-            title: 'لا توجد منتجات بعد',
-            message: 'أضف منتجات من لوحة الأدمن وستظهر هنا مباشرة.',
+            title: 'لا توجد منتجات معروضة حاليًا',
+            message: 'تأكد من وجود بيانات في Firestore ثم أعد نشر نسخة الويب.',
           );
         }
 
         return ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            const SectionCard(
+            Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(32),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF111111), Color(0xFF3B2C13)],
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                ),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'معرض المنتجات',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 34,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                  SizedBox(height: 8),
-                  Text('المستخدم يتصفح المنتجات ويضيفها إلى السلة ثم يختار وسيطًا لإتمام الطلب.'),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'تصفح المنتجات الأصلية المتاحة، شاهد التفاصيل، أضف إلى السلة، ثم اختر الوسيط لإتمام الطلب.',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 16,
+                      height: 1.6,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      'عدد المنتجات الحالية: ${products.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             LayoutBuilder(
               builder: (context, constraints) {
                 final width = constraints.maxWidth;
-                final crossAxisCount = width >= 1180 ? 3 : width >= 700 ? 2 : 1;
+                final crossAxisCount = width >= 1200 ? 3 : width >= 760 ? 2 : 1;
                 return GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: products.length,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1.05,
+                    crossAxisSpacing: 18,
+                    mainAxisSpacing: 18,
+                    childAspectRatio: 0.84,
                   ),
                   itemBuilder: (context, index) => _ProductCard(product: products[index]),
                 );
@@ -117,10 +156,11 @@ class ProductDetailsScreen extends ConsumerWidget {
             break;
           }
         }
+
         if (product == null) {
           return const EmptyState(
             title: 'المنتج غير موجود',
-            message: 'تعذر العثور على تفاصيل هذا المنتج.',
+            message: 'تعذر العثور على هذا المنتج.',
           );
         }
 
@@ -138,21 +178,39 @@ class ProductDetailsScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          product.name,
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.w900,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                product.name,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineMedium
+                                    ?.copyWith(fontWeight: FontWeight.w900),
                               ),
+                            ),
+                            _AvailabilityChip(product: product),
+                          ],
                         ),
                         const SizedBox(height: 8),
                         Text('رقم المنتج: ${product.productNumber}'),
                         Text('التصنيف: ${product.category}'),
-                        Text('العلامة: ${product.brand}'),
-                        Text('السعر: ${formatCurrency(product.price)}'),
+                        Text('العلامة التجارية: ${product.brand}'),
                         Text('المخزون: ${product.stock}'),
-                        const SizedBox(height: 18),
-                        Text(product.description),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 12),
+                        Text(
+                          formatCurrency(product.price),
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          product.description,
+                          style: const TextStyle(height: 1.7),
+                        ),
+                        const SizedBox(height: 20),
                         Wrap(
                           spacing: 12,
                           runSpacing: 12,
@@ -160,9 +218,7 @@ class ProductDetailsScreen extends ConsumerWidget {
                             ElevatedButton.icon(
                               onPressed: product.isAvailable
                                   ? () {
-                                      ref
-                                          .read(cartControllerProvider.notifier)
-                                          .addProduct(product!);
+                                      ref.read(cartControllerProvider.notifier).addProduct(product!);
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         const SnackBar(
                                           content: Text('تمت إضافة المنتج إلى السلة'),
@@ -201,7 +257,7 @@ class CartScreen extends ConsumerWidget {
     if (items.isEmpty) {
       return const EmptyState(
         title: 'السلة فارغة',
-        message: 'أضف منتجًا واحدًا أو أكثر ثم تابع إلى صفحة إتمام الطلب.',
+        message: 'أضف منتجًا واحدًا أو أكثر ثم تابع إلى إتمام الطلب.',
       );
     }
 
@@ -211,7 +267,7 @@ class CartScreen extends ConsumerWidget {
         const SectionCard(
           child: Text(
             'سلة المشتريات',
-            style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
           ),
         ),
         const SizedBox(height: 16),
@@ -222,13 +278,20 @@ class CartScreen extends ConsumerWidget {
                 _CartRow(item: item),
                 const Divider(),
               ],
+              const SizedBox(height: 12),
               Row(
                 children: [
-                  const Text('الإجمالي التقريبي:', style: TextStyle(fontWeight: FontWeight.w700)),
+                  const Text(
+                    'الإجمالي التقريبي',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                   const Spacer(),
                   Text(
                     formatCurrency(ref.watch(cartTotalProvider)),
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ],
               ),
@@ -274,7 +337,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   Widget build(BuildContext context) {
     final cartItems = ref.watch(cartControllerProvider);
     if (cartItems.isEmpty) {
-      return const EmptyState(title: 'لا يمكن إنشاء طلب', message: 'السلة فارغة حاليًا.');
+      return const EmptyState(
+        title: 'لا يمكن إنشاء طلب',
+        message: 'السلة فارغة حاليًا.',
+      );
     }
 
     return AsyncValueBuilder(
@@ -283,9 +349,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         if (mediators.isEmpty) {
           return const EmptyState(
             title: 'لا يوجد وسطاء',
-            message: 'يجب على الأدمن إضافة الوسطاء أولًا قبل إتمام أي طلب.',
+            message: 'يجب إضافة الوسطاء أولًا قبل إتمام الطلب.',
           );
         }
+
         _selectedMediatorId ??= mediators.first.id;
         final actionState = ref.watch(ordersActionsControllerProvider);
 
@@ -300,19 +367,22 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   children: [
                     const Text(
                       'إتمام الطلب',
-                      style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
+                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 18),
                     TextFormField(
                       controller: _nameController,
                       decoration: const InputDecoration(labelText: 'اسم العميل'),
-                      validator: (value) => value == null || value.trim().isEmpty ? 'الاسم مطلوب' : null,
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty ? 'الاسم مطلوب' : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _phoneController,
                       decoration: const InputDecoration(labelText: 'رقم الهاتف'),
-                      validator: (value) => value == null || value.trim().isEmpty ? 'رقم الهاتف مطلوب' : null,
+                      validator: (value) => value == null || value.trim().isEmpty
+                          ? 'رقم الهاتف مطلوب'
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -329,32 +399,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           .map(
                             (mediator) => DropdownMenuItem(
                               value: mediator.id,
-                              child: Text('${mediator.name} - ${mediator.location} - ${mediator.phone}'),
+                              child: Text(
+                                '${mediator.name} - ${mediator.location} - ${mediator.phone}',
+                              ),
                             ),
                           )
                           .toList(),
                       onChanged: (value) => setState(() => _selectedMediatorId = value),
                     ),
-                    const SizedBox(height: 16),
-                    for (final mediator in mediators)
-                      if (mediator.id == _selectedMediatorId)
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEDE6D9),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('الاسم: ${mediator.name}'),
-                              Text('الموقع: ${mediator.location}'),
-                              Text('الهاتف: ${mediator.phone}'),
-                              Text('الكود: ${mediator.code}'),
-                            ],
-                          ),
-                        ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -362,8 +415,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                             ? null
                             : () async {
                                 if (!_formKey.currentState!.validate()) return;
-                                final mediator = mediators.firstWhere((item) => item.id == _selectedMediatorId);
-                                await ref.read(ordersActionsControllerProvider.notifier).placeOrder(
+                                final mediator = mediators.firstWhere(
+                                  (item) => item.id == _selectedMediatorId,
+                                );
+                                await ref
+                                    .read(ordersActionsControllerProvider.notifier)
+                                    .placeOrder(
                                       PlaceOrderInput(
                                         items: cartItems
                                             .map(
@@ -385,9 +442,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                                     );
                                 final result = ref.read(ordersActionsControllerProvider);
                                 if (result.hasError) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('${result.error}')),
-                                  );
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('${result.error}')),
+                                    );
+                                  }
                                   return;
                                 }
                                 ref.read(cartControllerProvider.notifier).clear();
@@ -398,7 +457,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                                   context.go('/');
                                 }
                               },
-                        child: Text(actionState.isLoading ? 'جاري الإرسال...' : 'تأكيد الطلب'),
+                        child: Text(
+                          actionState.isLoading ? 'جاري الإرسال...' : 'تأكيد الطلب',
+                        ),
                       ),
                     ),
                   ],
@@ -419,41 +480,78 @@ class _ProductCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return SectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _ProductPreview(product: product),
-          const SizedBox(height: 14),
-          Text(product.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-          const SizedBox(height: 8),
-          Text(product.description, maxLines: 2, overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 10),
-          Text('رقم المنتج: ${product.productNumber}'),
-          Text('السعر: ${formatCurrency(product.price)}'),
-          const Spacer(),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              ElevatedButton(
-                onPressed: product.isAvailable
-                    ? () {
-                        ref.read(cartControllerProvider.notifier).addProduct(product);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('تمت إضافة المنتج إلى السلة')),
-                        );
-                      }
-                    : null,
-                child: const Text('إضافة للسلة'),
-              ),
-              OutlinedButton(
-                onPressed: () => context.go('/product/${product.id}'),
-                child: const Text('التفاصيل'),
-              ),
-            ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x12000000),
+            blurRadius: 22,
+            offset: Offset(0, 10),
           ),
         ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _ProductPreview(product: product)),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    product.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+                _AvailabilityChip(product: product),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              product.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(height: 1.5),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              formatCurrency(product.price),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ElevatedButton(
+                  onPressed: product.isAvailable
+                      ? () {
+                          ref.read(cartControllerProvider.notifier).addProduct(product);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('تمت إضافة المنتج إلى السلة')),
+                          );
+                        }
+                      : null,
+                  child: const Text('إضافة للسلة'),
+                ),
+                OutlinedButton(
+                  onPressed: () => context.go('/product/${product.id}'),
+                  child: const Text('التفاصيل'),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -468,15 +566,12 @@ class _ProductPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     if (product.imageUrl.isNotEmpty) {
       return ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
         child: Image.network(
           product.imageUrl,
-          height: 160,
-          width: 320,
+          width: double.infinity,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return _fallbackPreview();
-          },
+          errorBuilder: (context, error, stackTrace) => _fallbackPreview(),
         ),
       );
     }
@@ -486,16 +581,50 @@ class _ProductPreview extends StatelessWidget {
 
   Widget _fallbackPreview() {
     return Container(
-      height: 160,
-      width: 320,
       decoration: BoxDecoration(
-        color: const Color(0xFFEDE6D9),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFEDE4D3), Color(0xFFD8C4A1)],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ),
       ),
       alignment: Alignment.center,
       child: Text(
         product.name.substring(0, 1).toUpperCase(),
-        style: const TextStyle(fontSize: 46, fontWeight: FontWeight.w900),
+        style: const TextStyle(fontSize: 56, fontWeight: FontWeight.w900),
+      ),
+    );
+  }
+}
+
+class _AvailabilityChip extends StatelessWidget {
+  const _AvailabilityChip({required this.product});
+
+  final Product product;
+
+  @override
+  Widget build(BuildContext context) {
+    final background = product.isSold
+        ? const Color(0xFFE9D8D8)
+        : product.isReserved
+            ? const Color(0xFFF7E1B5)
+            : const Color(0xFFDDF0DD);
+    final text = product.isSold
+        ? 'مباع'
+        : product.isReserved
+            ? 'محجوز'
+            : 'متاح';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -515,32 +644,38 @@ class _CartRow extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(item.product.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-              Text('السعر: ${formatCurrency(item.product.price)}'),
+              Text(
+                item.product.name,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              Text(formatCurrency(item.product.price)),
             ],
           ),
         ),
         IconButton(
-          onPressed: () => ref.read(cartControllerProvider.notifier).changeQuantity(
-                item.product.id,
-                item.quantity - 1,
-              ),
+          onPressed: () => ref
+              .read(cartControllerProvider.notifier)
+              .changeQuantity(item.product.id, item.quantity - 1),
           icon: const Icon(Icons.remove_circle_outline),
         ),
         Text('${item.quantity}'),
         IconButton(
-          onPressed: () => ref.read(cartControllerProvider.notifier).changeQuantity(
-                item.product.id,
-                item.quantity + 1,
-              ),
+          onPressed: () => ref
+              .read(cartControllerProvider.notifier)
+              .changeQuantity(item.product.id, item.quantity + 1),
           icon: const Icon(Icons.add_circle_outline),
         ),
         SizedBox(
-          width: 140,
-          child: Text(formatCurrency(item.lineTotal), textAlign: TextAlign.center),
+          width: 120,
+          child: Text(
+            formatCurrency(item.lineTotal),
+            textAlign: TextAlign.center,
+          ),
         ),
         IconButton(
-          onPressed: () => ref.read(cartControllerProvider.notifier).removeProduct(item.product.id),
+          onPressed: () =>
+              ref.read(cartControllerProvider.notifier).removeProduct(item.product.id),
           icon: const Icon(Icons.delete_outline),
         ),
       ],

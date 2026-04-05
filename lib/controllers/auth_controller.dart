@@ -13,12 +13,25 @@ final authServiceProvider = Provider<AuthService>((ref) {
   return AuthService(ref.watch(firebaseAuthProvider));
 });
 
-final authSessionProvider = StreamProvider<AdminAuthSession>((ref) {
-  return ref.watch(authServiceProvider).authStateChanges();
-});
+class AuthSessionController extends StateNotifier<AdminAuthSession> {
+  AuthSessionController() : super(AdminAuthSession.unauthenticated());
+
+  void setSession(AdminAuthSession session) {
+    state = session;
+  }
+
+  void clear() {
+    state = AdminAuthSession.unauthenticated();
+  }
+}
+
+final authSessionProvider =
+    StateNotifierProvider<AuthSessionController, AdminAuthSession>(
+  (ref) => AuthSessionController(),
+);
 
 final adminStatusProvider = Provider<bool>((ref) {
-  return ref.watch(authSessionProvider).valueOrNull?.isAdmin ?? false;
+  return ref.watch(authSessionProvider).isAdmin;
 });
 
 class AuthActionController extends AsyncNotifier<void> {
@@ -30,19 +43,21 @@ class AuthActionController extends AsyncNotifier<void> {
     required String password,
   }) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref.read(authServiceProvider).signInAdmin(
+    state = await AsyncValue.guard(() async {
+      final session = await ref.read(authServiceProvider).signInAdmin(
             email: email,
             password: password,
-          ),
-    );
+          );
+      ref.read(authSessionProvider.notifier).setSession(session);
+    });
   }
 
   Future<void> signOut() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref.read(authServiceProvider).signOut(),
-    );
+    state = await AsyncValue.guard(() async {
+      await ref.read(authServiceProvider).signOut();
+      ref.read(authSessionProvider.notifier).clear();
+    });
   }
 }
 
