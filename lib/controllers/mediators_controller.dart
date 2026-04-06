@@ -10,9 +10,36 @@ final mediatorsServiceProvider = Provider<MediatorsService>((ref) {
   return MediatorsService(ref.watch(firestoreProvider));
 });
 
-final mediatorsProvider = StreamProvider<List<MediatorProfile>>((ref) {
-  return ref.watch(mediatorsServiceProvider).watchMediators();
-});
+class MediatorsCatalogController extends AsyncNotifier<List<MediatorProfile>> {
+  Timer? _timer;
+
+  @override
+  Future<List<MediatorProfile>> build() async {
+    ref.onDispose(() => _timer?.cancel());
+    _timer ??= Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => unawaited(refresh(silent: true)),
+    );
+    return _load();
+  }
+
+  Future<List<MediatorProfile>> _load() {
+    return ref.read(mediatorsServiceProvider).fetchMediators();
+  }
+
+  Future<void> refresh({bool silent = false}) async {
+    if (!silent) {
+      final previous = state.valueOrNull ?? const <MediatorProfile>[];
+      state = AsyncValue.data(previous);
+    }
+    state = await AsyncValue.guard(_load);
+  }
+}
+
+final mediatorsProvider =
+    AsyncNotifierProvider<MediatorsCatalogController, List<MediatorProfile>>(
+  MediatorsCatalogController.new,
+);
 
 final mediatorSearchProvider = StateProvider<String>((ref) => '');
 
@@ -66,6 +93,7 @@ class MediatorActionsController extends AsyncNotifier<void> {
     state = await AsyncValue.guard(
       () => ref.read(mediatorsServiceProvider).saveMediator(form.toMediator()),
     );
+    await ref.read(mediatorsProvider.notifier).refresh();
   }
 
   Future<void> delete(MediatorProfile mediator) async {
@@ -73,6 +101,7 @@ class MediatorActionsController extends AsyncNotifier<void> {
     state = await AsyncValue.guard(
       () => ref.read(mediatorsServiceProvider).deleteMediator(mediator),
     );
+    await ref.read(mediatorsProvider.notifier).refresh();
   }
 }
 

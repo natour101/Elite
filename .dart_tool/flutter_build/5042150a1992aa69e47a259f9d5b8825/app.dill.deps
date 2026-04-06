@@ -702,6 +702,7 @@ file:///C:/Users/natou/Documents/GitHub/Elite/lib/controllers/products_controlle
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/core/constants/app_constants.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/core/router/app_router.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/core/theme/app_theme.dart
+file:///C:/Users/natou/Documents/GitHub/Elite/lib/core/utils/polling_stream.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/firebase_options.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/main.dart
 file:///C:/Users/natou/Documents/GitHub/Elite/lib/models/app_order.dart

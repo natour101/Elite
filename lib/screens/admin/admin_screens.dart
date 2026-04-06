@@ -297,6 +297,7 @@ class AdminProductsScreen extends ConsumerWidget {
                           DataColumn(label: Text('السعر')),
                           DataColumn(label: Text('المخزون')),
                           DataColumn(label: Text('مميز')),
+
                           DataColumn(label: Text('الإجراءات')),
                         ],
                         rows: products.map((product) => _productRow(context, ref, product)).toList(),

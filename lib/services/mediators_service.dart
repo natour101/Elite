@@ -25,11 +25,11 @@ class MediatorsService {
       _firestore.collection(AppConstants.mediatorCodesCollection);
 
   Stream<List<MediatorProfile>> watchMediators() {
-    return pollingListStream(_fetchMediators);
+    return pollingListStream(fetchMediators);
   }
 
-  Future<List<MediatorProfile>> _fetchMediators() async {
-    final snapshot = await _mediators.get();
+  Future<List<MediatorProfile>> fetchMediators() async {
+    final snapshot = await _mediators.get().timeout(const Duration(seconds: 12));
     final mediators = snapshot.docs
         .map((doc) => MediatorProfile.fromMap(doc.id, doc.data()))
         .toList();

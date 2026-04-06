@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' show NumberFormat;
 
 import '../core/theme/app_theme.dart';
 
@@ -15,12 +15,7 @@ class SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: padding,
-        child: child,
-      ),
-    );
+    return Card(child: Padding(padding: padding, child: child));
   }
 }
 

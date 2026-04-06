@@ -13,29 +13,36 @@ class ProductsService {
       _firestore.collection(AppConstants.productsCollection);
 
   Stream<List<Product>> watchProducts() {
-    return pollingListStream(_fetchProducts);
+    return pollingListStream(fetchProducts);
   }
 
   Stream<List<Product>> watchMediatorProducts(String mediatorCode) {
-    return pollingListStream(() => _fetchMediatorProducts(mediatorCode));
+    return pollingListStream(() => fetchMediatorProducts(mediatorCode));
   }
 
-  Future<List<Product>> _fetchProducts() async {
-    final snapshot = await _collection.get();
-    final products = snapshot.docs
-        .map((doc) => Product.fromMap(doc.id, doc.data()))
-        .toList();
+  Future<List<Product>> fetchProducts() async {
+    final snapshot = await _collection.get().timeout(const Duration(seconds: 12));
+    final products = <Product>[];
+    for (final doc in snapshot.docs) {
+      try {
+        products.add(Product.fromMap(doc.id, doc.data()));
+      } catch (_) {}
+    }
     products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return products;
   }
 
-  Future<List<Product>> _fetchMediatorProducts(String mediatorCode) async {
+  Future<List<Product>> fetchMediatorProducts(String mediatorCode) async {
     final snapshot = await _collection
         .where('mediatorCode', isEqualTo: mediatorCode.toUpperCase())
-        .get();
-    final products = snapshot.docs
-        .map((doc) => Product.fromMap(doc.id, doc.data()))
-        .toList();
+        .get()
+        .timeout(const Duration(seconds: 12));
+    final products = <Product>[];
+    for (final doc in snapshot.docs) {
+      try {
+        products.add(Product.fromMap(doc.id, doc.data()));
+      } catch (_) {}
+    }
     products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return products;
   }

@@ -14,15 +14,53 @@ final productsServiceProvider = Provider<ProductsService>((ref) {
   return ProductsService(ref.watch(firestoreProvider));
 });
 
-final productsProvider = StreamProvider<List<Product>>((ref) {
-  return ref.watch(productsServiceProvider).watchProducts();
-});
+class ProductsCatalogController extends AsyncNotifier<List<Product>> {
+  Timer? _timer;
+
+  @override
+  Future<List<Product>> build() async {
+    ref.onDispose(() => _timer?.cancel());
+    _timer ??= Timer.periodic(
+      const Duration(seconds: 8),
+      (_) => unawaited(refresh(silent: true)),
+    );
+    return _load();
+  }
+
+  Future<List<Product>> _load() {
+    return ref.read(productsServiceProvider).fetchProducts();
+  }
+
+  Future<void> refresh({bool silent = false}) async {
+    if (!silent) {
+      final previous = state.valueOrNull ?? const <Product>[];
+      state = AsyncValue.data(previous);
+    }
+    state = await AsyncValue.guard(_load);
+  }
+}
+
+final productsProvider =
+    AsyncNotifierProvider<ProductsCatalogController, List<Product>>(
+  ProductsCatalogController.new,
+);
 
 final storefrontProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
   final productsAsync = ref.watch(productsProvider);
   return productsAsync.whenData(
     (products) => products.where((product) => product.isVisibleOnStorefront).toList(),
   );
+});
+
+final storefrontSegmentFilterProvider = StateProvider<String>((ref) => 'الكل');
+
+final filteredStorefrontProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
+  final productsAsync = ref.watch(storefrontProductsProvider);
+  final filter = ref.watch(storefrontSegmentFilterProvider);
+  return productsAsync.whenData((products) {
+    if (filter == 'الكل') return products;
+    return products.where((product) => product.storefrontSegment == filter).toList();
+  });
 });
 
 class ProductFormData {
@@ -41,6 +79,7 @@ class ProductFormData {
     this.mediatorId = '',
     this.mediatorCode = '',
     this.listingStatus = 'active',
+    this.segment = '',
   });
 
   final String id;
@@ -48,6 +87,7 @@ class ProductFormData {
   final String mediatorId;
   final String mediatorCode;
   final String listingStatus;
+  final String segment;
   final String name;
   final String productNumber;
   final String category;
@@ -74,6 +114,7 @@ class ProductFormData {
       mediatorId: mediatorId,
       mediatorCode: mediatorCode.trim().toUpperCase(),
       listingStatus: listingStatus,
+      segment: segment,
     );
   }
 }
@@ -87,6 +128,7 @@ class ProductActionsController extends AsyncNotifier<void> {
     state = await AsyncValue.guard(
       () => ref.read(productsServiceProvider).saveProduct(form.toProduct()),
     );
+    await ref.read(productsProvider.notifier).refresh();
   }
 
   Future<void> delete(String id) async {
@@ -94,6 +136,7 @@ class ProductActionsController extends AsyncNotifier<void> {
     state = await AsyncValue.guard(
       () => ref.read(productsServiceProvider).deleteProduct(id),
     );
+    await ref.read(productsProvider.notifier).refresh();
   }
 
   Future<void> updateStatus({
@@ -111,6 +154,7 @@ class ProductActionsController extends AsyncNotifier<void> {
             mediatorCode: mediatorCode,
           ),
     );
+    await ref.read(productsProvider.notifier).refresh();
   }
 }
 
