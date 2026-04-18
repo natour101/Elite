@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' show NumberFormat;
 
-import '../core/theme/app_theme.dart';
-
 class SectionCard extends StatelessWidget {
   const SectionCard({
     super.key,
@@ -15,7 +13,12 @@ class SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(child: Padding(padding: padding, child: child));
+    return Card(
+      child: Padding(
+        padding: padding,
+        child: child,
+      ),
+    );
   }
 }
 
@@ -63,41 +66,6 @@ String formatCurrency(double? value) {
   return NumberFormat.currency(
     locale: 'ar',
     symbol: 'JOD ',
-    decimalDigits: 2,
+    decimalDigits: 0,
   ).format(value);
-}
-
-class StatusChip extends StatelessWidget {
-  const StatusChip({
-    super.key,
-    required this.label,
-  });
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final normalized = label.toLowerCase();
-    final color = switch (normalized) {
-      'completed' => Colors.green,
-      'processing' => Colors.orange,
-      'cancelled' => Colors.red,
-      _ => AppTheme.gold,
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
 }

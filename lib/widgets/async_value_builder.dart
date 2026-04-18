@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/widgets/app_loader.dart';
+
 class AsyncValueBuilder<T> extends StatelessWidget {
   const AsyncValueBuilder({
     super.key,
@@ -19,20 +21,7 @@ class AsyncValueBuilder<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return value.when(
       data: data,
-      loading: () => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(
-              width: 28,
-              height: 28,
-              child: CircularProgressIndicator(strokeWidth: 2.4),
-            ),
-            const SizedBox(height: 14),
-            Text(loadingMessage),
-          ],
-        ),
-      ),
+      loading: () => AppLoader(label: loadingMessage, size: 72),
       error: (error, stackTrace) => Center(
         child: Padding(
           padding: const EdgeInsets.all(24),

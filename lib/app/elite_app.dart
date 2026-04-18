@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,7 +12,7 @@ class EliteApp extends StatelessWidget {
     return ProviderScope(
       child: Consumer(
         builder: (context, ref, _) {
-          final router = ref.watch(appRouterProvider(_resolveEntry()));
+          final router = ref.watch(appRouterProvider);
           return MaterialApp.router(
             title: 'Elite Luxury Store',
             debugShowCheckedModeBanner: false,
@@ -23,13 +22,5 @@ class EliteApp extends StatelessWidget {
         },
       ),
     );
-  }
-
-  AppEntry _resolveEntry() {
-    if (kIsWeb) return AppEntry.storefront;
-    if (defaultTargetPlatform == TargetPlatform.windows) {
-      return AppEntry.admin;
-    }
-    return AppEntry.storefront;
   }
 }
