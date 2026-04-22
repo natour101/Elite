@@ -1,63 +1,83 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/portal/presentation/pages/portal_pages.dart';
-import '../../models/product.dart';
-import '../../screens/store/store_screens.dart';
+import '../../components/antique_shell.dart';
+import '../../pages/cart_page.dart';
+import '../../pages/home_page.dart';
+import '../../pages/product_details_page.dart';
+import '../../pages/shop_page.dart';
+import '../../pages/stats_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
     routes: [
       ShellRoute(
-        builder: (context, state, child) => StoreShell(
-          routeLocation: state.uri.toString(),
-          child: child,
-        ),
+        builder: (context, state, child) => AntiqueShell(child: child),
         routes: [
           GoRoute(
             path: '/',
-            builder: (context, state) => const StoreHomeScreen(),
-          ),
-          GoRoute(
-            path: '/segment/men',
-            builder: (context, state) =>
-                const SegmentStoreScreen(segment: kMenSegment),
-          ),
-          GoRoute(
-            path: '/segment/women',
-            builder: (context, state) =>
-                const SegmentStoreScreen(segment: kWomenSegment),
-          ),
-          GoRoute(
-            path: '/segment/antique',
-            builder: (context, state) =>
-                const SegmentStoreScreen(segment: kAntiqueSegment),
-          ),
-          GoRoute(
-            path: '/product/:id',
-            builder: (context, state) => ProductDetailsScreen(
-              productId: state.pathParameters['id']!,
+            pageBuilder: (context, state) => _fadePage(
+              state: state,
+              child: const HomePage(),
             ),
           ),
           GoRoute(
-            path: '/policies',
-            builder: (context, state) => const PoliciesPage(),
+            path: '/shop',
+            pageBuilder: (context, state) => _fadePage(
+              state: state,
+              child: const ShopPage(),
+            ),
           ),
           GoRoute(
-            path: '/about',
-            builder: (context, state) => const AboutCompanyPage(),
+            path: '/product/:id',
+            pageBuilder: (context, state) => _fadePage(
+              state: state,
+              child: ProductDetailsPage(
+                productId: state.pathParameters['id']!,
+              ),
+            ),
           ),
           GoRoute(
-            path: '/team',
-            builder: (context, state) => const TeamPage(),
+            path: '/cart',
+            pageBuilder: (context, state) => _fadePage(
+              state: state,
+              child: const CartPage(),
+            ),
           ),
           GoRoute(
-            path: '/portal',
-            builder: (context, state) => const PortalGatePage(),
+            path: '/stats',
+            pageBuilder: (context, state) => _fadePage(
+              state: state,
+              child: const StatsPage(),
+            ),
           ),
         ],
       ),
     ],
   );
 });
+
+CustomTransitionPage<void> _fadePage({
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.04),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        ),
+      );
+    },
+  );
+}

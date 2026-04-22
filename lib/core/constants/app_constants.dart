@@ -2,8 +2,11 @@ class AppConstants {
   const AppConstants._();
 
   static const String adminUsername = 'ADMIN2026';
-  static const String companyWhatsappPhone = '+962795422974';
   static const String supportWhatsappPhone = '+962795422974';
+  static const bool useDummyStorefrontData = true;
+  static const int storeReservationMinutes = 12;
+  static const int mediatorReservationMinutes = 15;
+  static const double defaultMediatorCommissionRate = 0.025;
 
   static const String productsCollection = 'products';
   static const String mediatorsCollection = 'mediators';
@@ -18,7 +21,7 @@ class AppConstants {
   static const String cloudinaryApiSecret = '5SNblwC6csFw_3q0hkHtSV1bjW4';
   static const String cloudinaryFolder = 'elite_products';
 
-  static const List<String> freeDeliveryCities = ['إربد', 'الزرقاء'];
+  static const List<String> freeDeliveryCities = ['إربد', 'الزرقاء','عمان'];
 
   static const List<String> productSections = [
     'رجالي',

@@ -1,17 +1,24 @@
+import 'dart:math' as math;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-const Duration kProductReservationDuration = Duration(minutes: 15);
+import '../core/constants/app_constants.dart';
+
+const Duration kProductReservationDuration = Duration(
+  minutes: AppConstants.mediatorReservationMinutes,
+);
 const String kAllProductsSegment = 'الكل';
 const String kMenSegment = 'رجالي';
 const String kWomenSegment = 'ستاتي';
 const String kAntiqueSegment = 'أنتيكا';
 const String kProductStatusAvailable = 'available';
 const String kProductStatusReserved = 'reserved';
+const String kProductStatusSaleRequested = 'sale_requested';
 const String kProductStatusSold = 'sold';
+const String kProductStatusDelivered = 'delivered';
 const String kApprovalStatusApproved = 'approved';
 const String kApprovalStatusPending = 'pending';
 const String kApprovalStatusRejected = 'rejected';
-const double kMediatorSellingCommissionRate = 0.025;
 
 class Product {
   const Product({
@@ -31,6 +38,8 @@ class Product {
     this.ownerPhone = '',
     this.mediatorId = '',
     this.mediatorCode = '',
+    this.mediatorCommission,
+    this.reservationDurationMinutes = AppConstants.mediatorReservationMinutes,
     this.listingStatus = kProductStatusAvailable,
     this.approvalStatus = kApprovalStatusApproved,
     this.listedByMediatorId = '',
@@ -48,7 +57,9 @@ class Product {
     this.lastAction = '',
     this.lastInquiryAt,
     this.reservedAt,
+    this.saleRequestedAt,
     this.soldAt,
+    this.deliveredAt,
     this.updatedAt,
   });
 
@@ -68,6 +79,8 @@ class Product {
   final String ownerPhone;
   final String mediatorId;
   final String mediatorCode;
+  final double? mediatorCommission;
+  final int reservationDurationMinutes;
   final String listingStatus;
   final String approvalStatus;
   final String listedByMediatorId;
@@ -85,36 +98,51 @@ class Product {
   final String lastAction;
   final DateTime? lastInquiryAt;
   final DateTime? reservedAt;
+  final DateTime? saleRequestedAt;
   final DateTime? soldAt;
+  final DateTime? deliveredAt;
   final DateTime? updatedAt;
 
-  bool get isSold => listingStatus == kProductStatusSold;
+  bool get isDelivered => listingStatus == kProductStatusDelivered;
+  bool get isSold =>
+      listingStatus == kProductStatusSold || listingStatus == kProductStatusDelivered;
+  bool get isSaleRequested => listingStatus == kProductStatusSaleRequested;
   bool get isApproved => approvalStatus == kApprovalStatusApproved;
   bool get isPendingApproval => approvalStatus == kApprovalStatusPending;
   bool get isRejected => approvalStatus == kApprovalStatusRejected;
-  bool get hasActiveReservation => remainingReservation != Duration.zero;
-  bool get isReserved =>
-      listingStatus == kProductStatusReserved && hasActiveReservation;
-  bool get isAvailable => stock > 0 && !isSold && !isReserved && isApproved;
-  bool get isVisibleOnStorefront => !isSold && isApproved;
+  bool get hasActiveReservation =>
+      listingStatus == kProductStatusReserved && remainingReservation != Duration.zero;
+  bool get isReserved => hasActiveReservation;
+  bool get isAvailable => stock > 0 && statusKey == kProductStatusAvailable && isApproved;
+  bool get isVisibleOnStorefront =>
+      !isSold && !isSaleRequested && isApproved;
+  bool get canBeReservedByMediator => isApproved && !isSold && !isSaleRequested;
+  bool get countsTowardRevenue => isDelivered;
 
-  DateTime? get reservationExpiresAt =>
-      reservedAt?.add(kProductReservationDuration);
+  DateTime? get reservationExpiresAt => reservedAt?.add(
+        Duration(minutes: reservationDurationMinutes),
+      );
 
   Duration get remainingReservation {
     final expiresAt = reservationExpiresAt;
-    if (expiresAt == null) return Duration.zero;
+    if (expiresAt == null || listingStatus != kProductStatusReserved) {
+      return Duration.zero;
+    }
     final remaining = expiresAt.difference(DateTime.now());
     return remaining.isNegative ? Duration.zero : remaining;
   }
 
   double get effectivePrice => price ?? 0;
+  double get effectiveMediatorCommission =>
+      mediatorCommission ??
+      (effectivePrice * AppConstants.defaultMediatorCommissionRate);
   double get listingShare => 0;
   double get sellingShare =>
-      soldByMediatorCode.isNotEmpty
-          ? effectivePrice * kMediatorSellingCommissionRate
+      soldByMediatorCode.isNotEmpty && countsTowardRevenue
+          ? effectiveMediatorCommission
           : 0;
-  double get companyShare => effectivePrice - sellingShare;
+  double get companyShare =>
+      countsTowardRevenue ? math.max(0, effectivePrice - sellingShare) : 0;
   double get mediatorBalance => sellingShare;
 
   String get displayName =>
@@ -125,12 +153,16 @@ class Product {
     if (raw.contains('رجالي')) return kMenSegment;
     if (raw.contains('ستاتي') || raw.contains('نسائي')) return kWomenSegment;
     if (raw.contains('انتيكا') || raw.contains('أنتيكا')) return kAntiqueSegment;
-    return raw;
+    return raw.isEmpty ? kAllProductsSegment : raw;
   }
 
   String get statusKey {
-    if (isSold) return kProductStatusSold;
-    if (isReserved) return kProductStatusReserved;
+    if (isDelivered) return kProductStatusDelivered;
+    if (listingStatus == kProductStatusSold) return kProductStatusSold;
+    if (listingStatus == kProductStatusSaleRequested) {
+      return kProductStatusSaleRequested;
+    }
+    if (hasActiveReservation) return kProductStatusReserved;
     return kProductStatusAvailable;
   }
 
@@ -138,8 +170,12 @@ class Product {
     switch (statusKey) {
       case kProductStatusReserved:
         return 'محجوز';
+      case kProductStatusSaleRequested:
+        return 'بانتظار تأكيد الإدارة';
       case kProductStatusSold:
         return 'تم البيع';
+      case kProductStatusDelivered:
+        return 'تم التوصيل';
       default:
         return 'متاح';
     }
@@ -162,6 +198,8 @@ class Product {
     String? ownerPhone,
     String? mediatorId,
     String? mediatorCode,
+    double? mediatorCommission,
+    int? reservationDurationMinutes,
     String? listingStatus,
     String? approvalStatus,
     String? listedByMediatorId,
@@ -179,7 +217,9 @@ class Product {
     String? lastAction,
     DateTime? lastInquiryAt,
     DateTime? reservedAt,
+    DateTime? saleRequestedAt,
     DateTime? soldAt,
+    DateTime? deliveredAt,
     DateTime? updatedAt,
   }) {
     return Product(
@@ -199,11 +239,16 @@ class Product {
       ownerPhone: ownerPhone ?? this.ownerPhone,
       mediatorId: mediatorId ?? this.mediatorId,
       mediatorCode: mediatorCode ?? this.mediatorCode,
+      mediatorCommission: mediatorCommission ?? this.mediatorCommission,
+      reservationDurationMinutes:
+          reservationDurationMinutes ?? this.reservationDurationMinutes,
       listingStatus: listingStatus ?? this.listingStatus,
       approvalStatus: approvalStatus ?? this.approvalStatus,
       listedByMediatorId: listedByMediatorId ?? this.listedByMediatorId,
-      listedByMediatorCode: listedByMediatorCode ?? this.listedByMediatorCode,
-      listedByMediatorName: listedByMediatorName ?? this.listedByMediatorName,
+      listedByMediatorCode:
+          listedByMediatorCode ?? this.listedByMediatorCode,
+      listedByMediatorName:
+          listedByMediatorName ?? this.listedByMediatorName,
       soldByMediatorId: soldByMediatorId ?? this.soldByMediatorId,
       soldByMediatorCode: soldByMediatorCode ?? this.soldByMediatorCode,
       soldByMediatorName: soldByMediatorName ?? this.soldByMediatorName,
@@ -219,7 +264,9 @@ class Product {
       lastAction: lastAction ?? this.lastAction,
       lastInquiryAt: lastInquiryAt ?? this.lastInquiryAt,
       reservedAt: reservedAt ?? this.reservedAt,
+      saleRequestedAt: saleRequestedAt ?? this.saleRequestedAt,
       soldAt: soldAt ?? this.soldAt,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
@@ -241,6 +288,8 @@ class Product {
       'ownerPhone': ownerPhone,
       'mediatorId': mediatorId,
       'mediatorCode': mediatorCode,
+      'mediatorCommission': mediatorCommission,
+      'reservationDurationMinutes': reservationDurationMinutes,
       'listingStatus': listingStatus,
       'approvalStatus': approvalStatus,
       'listedByMediatorId': listedByMediatorId,
@@ -259,7 +308,11 @@ class Product {
       'lastInquiryAt':
           lastInquiryAt == null ? null : Timestamp.fromDate(lastInquiryAt!),
       'reservedAt': reservedAt == null ? null : Timestamp.fromDate(reservedAt!),
+      'saleRequestedAt':
+          saleRequestedAt == null ? null : Timestamp.fromDate(saleRequestedAt!),
       'soldAt': soldAt == null ? null : Timestamp.fromDate(soldAt!),
+      'deliveredAt':
+          deliveredAt == null ? null : Timestamp.fromDate(deliveredAt!),
       'updatedAt': updatedAt == null ? null : Timestamp.fromDate(updatedAt!),
     };
   }
@@ -267,7 +320,11 @@ class Product {
   factory Product.fromMap(String id, Map<String, dynamic> map) {
     DateTime? readDate(String key) {
       final value = map[key];
-      return value is Timestamp ? value.toDate() : null;
+      if (value is Timestamp) return value.toDate();
+      if (value is String && value.isNotEmpty) {
+        return DateTime.tryParse(value);
+      }
+      return null;
     }
 
     final createdAt = map['createdAt'];
@@ -289,8 +346,11 @@ class Product {
       ownerPhone: map['ownerPhone'] as String? ?? '',
       mediatorId: map['mediatorId'] as String? ?? '',
       mediatorCode: (map['mediatorCode'] as String? ?? '').toUpperCase(),
-      listingStatus:
-          map['listingStatus'] as String? ?? kProductStatusAvailable,
+      mediatorCommission: (map['mediatorCommission'] as num?)?.toDouble(),
+      reservationDurationMinutes:
+          (map['reservationDurationMinutes'] as num?)?.toInt() ??
+              AppConstants.mediatorReservationMinutes,
+      listingStatus: map['listingStatus'] as String? ?? kProductStatusAvailable,
       approvalStatus:
           map['approvalStatus'] as String? ?? kApprovalStatusApproved,
       listedByMediatorId: map['listedByMediatorId'] as String? ?? '',
@@ -311,7 +371,9 @@ class Product {
       lastAction: map['lastAction'] as String? ?? '',
       lastInquiryAt: readDate('lastInquiryAt'),
       reservedAt: readDate('reservedAt'),
+      saleRequestedAt: readDate('saleRequestedAt'),
       soldAt: readDate('soldAt'),
+      deliveredAt: readDate('deliveredAt'),
       updatedAt: readDate('updatedAt'),
     );
   }

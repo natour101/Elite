@@ -14,7 +14,7 @@ final dashboardSummaryProvider = Provider<DashboardSummary>((ref) {
   final mediators =
       ref.watch(mediatorsProvider).valueOrNull ?? const <Mediator>[];
   final metrics = ref.watch(siteMetricsProvider).valueOrNull;
-  final soldProducts = products.where((product) => product.isSold).toList();
+  final soldProducts = products.where((product) => product.isDelivered).toList();
 
   final profits = <String, double>{};
   final balances = <String, double>{};
@@ -87,7 +87,7 @@ final portalCatalogProductsProvider = Provider<List<Product>>((ref) {
   if (session == null || session.isAdmin) return products;
 
   return products
-      .where((product) => product.isApproved && !product.isSold)
+      .where((product) => product.isApproved && !product.isSold && !product.isSaleRequested)
       .toList();
 });
 
@@ -96,7 +96,7 @@ final portalSalesProductsProvider = Provider<List<Product>>((ref) {
   final products = ref.watch(productsProvider).valueOrNull ?? const <Product>[];
 
   if (session == null || session.isAdmin) {
-    return products.where((product) => product.isSold).toList();
+    return products.where((product) => product.isDelivered).toList();
   }
 
   final code = session.mediator?.code.toUpperCase() ?? '';

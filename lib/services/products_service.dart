@@ -91,8 +91,8 @@ class ProductsService {
         final doc = document as Map<String, dynamic>;
         final namePath = doc['name'] as String? ?? '';
         final id = namePath.split('/').isNotEmpty ? namePath.split('/').last : '';
-        final fields = doc['fields'] as Map<String, dynamic>? ??
-            const <String, dynamic>{};
+        final fields =
+            doc['fields'] as Map<String, dynamic>? ?? const <String, dynamic>{};
         products.add(Product.fromMap(id, _decodeDocument(fields)));
       } catch (_) {}
     }
@@ -201,13 +201,14 @@ class ProductsService {
     );
   }
 
-  Future<void> markProductSold({
+  Future<void> requestMediatorSale({
     required Product product,
+    required String buyerName,
     required String buyerPhone,
     required String buyerAddress,
-    String soldByMediatorId = '',
-    String soldByMediatorCode = '',
-    String soldByMediatorName = '',
+    required String mediatorId,
+    required String mediatorCode,
+    required String mediatorName,
   }) async {
     final now = DateTime.now();
     final productRef = _collection.doc(product.id);
@@ -220,7 +221,53 @@ class ProductsService {
 
       final currentProduct = Product.fromMap(product.id, snapshot.data()!);
       if (currentProduct.isSold) {
-        throw Exception('تم بيع هذا المنتج مسبقاً.');
+        throw Exception('تم إغلاق بيع هذا المنتج مسبقاً.');
+      }
+      if (!currentProduct.hasActiveReservation ||
+          currentProduct.reservedByMediatorCode != mediatorCode.toUpperCase()) {
+        throw Exception('يجب حجز المنتج أولاً من حساب الوسيط قبل إرسال طلب البيع.');
+      }
+
+      transaction.set(
+        productRef,
+        {
+          'listingStatus': kProductStatusSaleRequested,
+          'buyerName': buyerName.trim(),
+          'buyerPhone': buyerPhone.trim(),
+          'buyerAddress': buyerAddress.trim(),
+          'soldByMediatorId': mediatorId,
+          'soldByMediatorCode': mediatorCode.toUpperCase(),
+          'soldByMediatorName': mediatorName,
+          'saleRequestedAt': Timestamp.fromDate(now),
+          'lastAction': 'mediator_sale_requested',
+          'updatedAt': Timestamp.fromDate(now),
+        },
+        SetOptions(merge: true),
+      );
+    });
+  }
+
+  Future<void> markProductSoldByAdmin({
+    required Product product,
+    required String buyerName,
+    required String buyerPhone,
+    required String buyerAddress,
+  }) async {
+    final now = DateTime.now();
+    final productRef = _collection.doc(product.id);
+
+    await _firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(productRef);
+      if (!snapshot.exists) {
+        throw Exception('المنتج غير موجود حالياً.');
+      }
+
+      final currentProduct = Product.fromMap(product.id, snapshot.data()!);
+      if (currentProduct.isDelivered) {
+        throw Exception('هذا المنتج تم توصيله مسبقاً.');
+      }
+      if (currentProduct.listingStatus == kProductStatusSold) {
+        throw Exception('هذا المنتج مؤكد البيع مسبقاً.');
       }
 
       transaction.set(
@@ -228,14 +275,47 @@ class ProductsService {
         {
           'listingStatus': kProductStatusSold,
           'soldAt': Timestamp.fromDate(now),
-          'reservedAt': null,
-          'buyerPhone': buyerPhone.trim(),
-          'buyerAddress': buyerAddress.trim(),
-          'lastAction': 'sold',
-          'soldByMediatorId': soldByMediatorId,
-          'soldByMediatorCode': soldByMediatorCode.toUpperCase(),
-          'soldByMediatorName': soldByMediatorName,
+          'buyerName': buyerName.trim().isEmpty
+              ? currentProduct.buyerName
+              : buyerName.trim(),
+          'buyerPhone': buyerPhone.trim().isEmpty
+              ? currentProduct.buyerPhone
+              : buyerPhone.trim(),
+          'buyerAddress': buyerAddress.trim().isEmpty
+              ? currentProduct.buyerAddress
+              : buyerAddress.trim(),
+          'lastAction': 'admin_sold',
           'updatedAt': Timestamp.fromDate(now),
+        },
+        SetOptions(merge: true),
+      );
+    });
+  }
+
+  Future<void> markProductDelivered({
+    required Product product,
+  }) async {
+    final now = DateTime.now();
+    final productRef = _collection.doc(product.id);
+
+    await _firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(productRef);
+      if (!snapshot.exists) {
+        throw Exception('المنتج غير موجود حالياً.');
+      }
+
+      final currentProduct = Product.fromMap(product.id, snapshot.data()!);
+      if (!currentProduct.isSold || currentProduct.isDelivered) {
+        throw Exception('يمكن تأكيد التوصيل فقط بعد اعتماد البيع من الإدارة.');
+      }
+
+      transaction.set(
+        productRef,
+        {
+          'listingStatus': kProductStatusDelivered,
+          'deliveredAt': Timestamp.fromDate(now),
+          'updatedAt': Timestamp.fromDate(now),
+          'lastAction': 'delivered',
         },
         SetOptions(merge: true),
       );
@@ -252,9 +332,10 @@ class ProductsService {
     String mediatorCode = '',
     String mediatorName = '',
     String reservationSource = 'store_purchase',
+    int reservationDurationMinutes = AppConstants.mediatorReservationMinutes,
   }) async {
     final now = DateTime.now();
-    final expiresAt = now.add(kProductReservationDuration);
+    final expiresAt = now.add(Duration(minutes: reservationDurationMinutes));
     final orderRef = _firestore.collection(AppConstants.ordersCollection).doc();
     final productRef = _collection.doc(product.id);
 
@@ -267,6 +348,9 @@ class ProductsService {
       final currentProduct = Product.fromMap(product.id, snapshot.data()!);
       if (currentProduct.isSold) {
         throw Exception('هذا المنتج تم بيعه بالفعل.');
+      }
+      if (currentProduct.isSaleRequested) {
+        throw Exception('هذا المنتج بانتظار اعتماد البيع من الإدارة.');
       }
       if (currentProduct.hasActiveReservation) {
         throw Exception('هذا المنتج محجوز حالياً ولا يمكن حجزه مرة أخرى.');
@@ -289,6 +373,7 @@ class ProductsService {
           'status': kProductStatusReserved,
           'createdAt': Timestamp.fromDate(now),
           'reservedUntil': Timestamp.fromDate(expiresAt),
+          'reservationDurationMinutes': reservationDurationMinutes,
         },
       );
 
@@ -298,6 +383,7 @@ class ProductsService {
           'listingStatus': kProductStatusReserved,
           'mediatorId': mediatorId,
           'mediatorCode': mediatorCode.toUpperCase(),
+          'reservationDurationMinutes': reservationDurationMinutes,
           'reservedByMediatorId': mediatorId,
           'reservedByMediatorCode': mediatorCode.toUpperCase(),
           'reservedByMediatorName': mediatorName,
@@ -306,6 +392,7 @@ class ProductsService {
           'buyerAddress': buyerAddress.trim(),
           'lastAction': reservationSource,
           'reservedAt': Timestamp.fromDate(now),
+          'saleRequestedAt': null,
           'updatedAt': Timestamp.fromDate(now),
         },
         SetOptions(merge: true),
