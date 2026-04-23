@@ -15,9 +15,8 @@ final antiqueCatalogServiceProvider = Provider<AntiqueCatalogService>((ref) {
   return AntiqueCatalogService(ref.watch(firestoreProvider));
 });
 
-final catalogProvider = FutureProvider<List<AntiqueProduct>>((ref) async {
-  final products = await ref.watch(antiqueCatalogServiceProvider).fetchProducts();
-  return products.take(12).toList(growable: false);
+final catalogProvider = StreamProvider<List<AntiqueProduct>>((ref) {
+  return ref.watch(antiqueCatalogServiceProvider).watchProducts();
 });
 
 final featuredProductsProvider = Provider<List<AntiqueProduct>>((ref) {

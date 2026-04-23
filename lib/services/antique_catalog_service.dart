@@ -7,22 +7,64 @@ class AntiqueCatalogService {
 
   final FirebaseFirestore _firestore;
 
-  Future<List<AntiqueProduct>> fetchProducts() async {
-    try {
-      final snapshot = await _firestore.collection('products').get();
-      final products = snapshot.docs
-          .map((doc) => _fromMap(doc.id, doc.data()))
-          .whereType<AntiqueProduct>()
-          .where(_isAntiqueProduct)
-          .toList(growable: false);
-      if (products.isNotEmpty) {
-        return products;
-      }
-    } catch (_) {
-      // Falls back to the curated local catalog when remote data is unavailable.
-    }
+  CollectionReference<Map<String, dynamic>> get _collection =>
+      _firestore.collection('products');
 
-    return _fallbackProducts;
+  Stream<List<AntiqueProduct>> watchProducts() {
+    return _collection.snapshots().map((snapshot) {
+      final products = snapshot.docs
+          .map(
+            (doc) => (
+              product: _fromMap(doc.id, doc.data()),
+              createdAt: _createdAtSortValue(doc.data()['createdAt']),
+            ),
+          )
+          .where((entry) => entry.product != null)
+          .toList();
+
+      products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      final normalizedProducts =
+          products.map((entry) => entry.product!).toList(growable: false);
+
+      if (normalizedProducts.isEmpty) {
+        return _fallbackProducts;
+      }
+
+      return normalizedProducts;
+    }).handleError((_) => _fallbackProducts);
+  }
+
+  Future<void> saveProduct({
+    required String name,
+    required String description,
+    required double price,
+    required String category,
+    required String era,
+    required String material,
+    required String imageUrl,
+    required String story,
+    required String dimensions,
+    required String condition,
+    bool isFeatured = false,
+  }) async {
+    final doc = _collection.doc();
+    await doc.set({
+      'productNumber': 'ANT-${DateTime.now().millisecondsSinceEpoch}',
+      'name': name.trim(),
+      'description': description.trim(),
+      'price': price,
+      'category': category.trim(),
+      'era': era.trim(),
+      'material': material.trim(),
+      'imageUrl': imageUrl.trim(),
+      'story': story.trim(),
+      'dimensions': dimensions.trim(),
+      'condition': condition.trim(),
+      'isFeatured': isFeatured,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   AntiqueProduct? _fromMap(String id, Map<String, dynamic> map) {
@@ -60,14 +102,17 @@ class AntiqueCatalogService {
     );
   }
 
-  bool _isAntiqueProduct(AntiqueProduct product) {
-    final haystack =
-        '${product.name} ${product.description} ${product.category} ${product.era}'.toLowerCase();
-    return haystack.contains('أنتيك') ||
-        haystack.contains('انتيك') ||
-        haystack.contains('تحف') ||
-        haystack.contains('antique') ||
-        haystack.contains('vintage');
+  int _createdAtSortValue(dynamic value) {
+    if (value is Timestamp) {
+      return value.microsecondsSinceEpoch;
+    }
+    if (value is DateTime) {
+      return value.microsecondsSinceEpoch;
+    }
+    if (value is String) {
+      return DateTime.tryParse(value)?.microsecondsSinceEpoch ?? 0;
+    }
+    return 0;
   }
 }
 

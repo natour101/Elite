@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../utils/app_spacing.dart';
@@ -28,25 +28,26 @@ class HeroBanner extends StatelessWidget {
               builder: (context, constraints) {
                 final wide = constraints.maxWidth >= 840;
 
-                final title = Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'تحف وقطع قديمة مختارة بعناية',
-                        style: textTheme.headlineMedium?.copyWith(
-                          color: Colors.white,
-                          height: 1.1,
-                        ),
+                final title = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'تحف وقطع قديمة مختارة بعناية',
+                      style: textTheme.headlineMedium?.copyWith(
+                        color: Colors.white,
+                        height: 1.1,
                       ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        'تصفح القطع واطلبها مباشرة عبر واتساب.',
-                        style: textTheme.bodyLarge?.copyWith(color: const Color(0xFFF1E3D1)),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'تصفح القطع واطلبها مباشرة عبر واتساب.',
+                      style: textTheme.bodyLarge?.copyWith(
+                        color: const Color(0xFFF1E3D1),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 );
 
                 final button = OutlinedButton(
@@ -61,7 +62,7 @@ class HeroBanner extends StatelessWidget {
                 if (wide) {
                   return Row(
                     children: [
-                      title,
+                      Expanded(child: title),
                       const SizedBox(width: AppSpacing.md),
                       button,
                     ],
@@ -70,6 +71,7 @@ class HeroBanner extends StatelessWidget {
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     title,
                     const SizedBox(height: AppSpacing.md),

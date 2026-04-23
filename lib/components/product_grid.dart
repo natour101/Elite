@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../models/antique_product.dart';
 import 'product_card.dart';
@@ -16,23 +16,25 @@ class ProductGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final crossAxisCount = width >= 1100
-            ? 3
-            : width >= 360
-                ? 2
-                : 1;
+        final columns = width >= 1180 ? 3 : width >= 560 ? 2 : 1;
+        final spacing = width >= 960 ? 14.0 : width >= 560 ? 12.0 : 10.0;
+        final cardHeight = width >= 960 ? 300.0 : width >= 560 ? 320.0 : 350.0;
+        final totalSpacing = spacing * (columns - 1);
+        final cardWidth = columns == 1
+            ? width
+            : ((width - totalSpacing) / columns).clamp(0.0, width).toDouble();
 
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: products.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            mainAxisExtent: width < 430 ? 330 : 360,
-          ),
-          itemBuilder: (context, index) => ProductCard(product: products[index]),
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final product in products)
+              SizedBox(
+                width: cardWidth,
+                height: cardHeight,
+                child: ProductCard(product: product),
+              ),
+          ],
         );
       },
     );

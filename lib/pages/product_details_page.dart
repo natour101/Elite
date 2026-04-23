@@ -67,6 +67,21 @@ class _ProductDetailsPageState extends ConsumerState<ProductDetailsPage> {
                               product.imageUrl,
                               fit: BoxFit.cover,
                               filterQuality: FilterQuality.medium,
+                              loadingBuilder: (context, child, progress) {
+                                if (progress == null) return child;
+                                return const Center(child: CircularProgressIndicator());
+                              },
+                              errorBuilder: (context, _, __) {
+                                return const ColoredBox(
+                                  color: Color(0xFFF0E3D1),
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.image_not_supported_outlined,
+                                      color: AppTheme.bronze,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         ),

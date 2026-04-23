@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/antique_product.dart';
@@ -48,18 +49,34 @@ class WhatsappService {
   }
 
   static Future<bool> _openChat(String message) async {
-    final cleanPhone = _salesPhone.replaceAll(RegExp(r'[^0-9]'), '');
+    final cleanPhone = _normalizePhone(_salesPhone);
     final encoded = Uri.encodeComponent(message);
-    final primaryUri = Uri.parse('https://wa.me/$cleanPhone?text=$encoded');
-    final fallbackUri =
-        Uri.parse('https://api.whatsapp.com/send?phone=$cleanPhone&text=$encoded');
 
-    final launchedPrimary =
-        await launchUrl(primaryUri, mode: LaunchMode.externalApplication);
-    if (launchedPrimary) {
-      return true;
+    final uris = <Uri>[
+      Uri.parse('whatsapp://send?phone=$cleanPhone&text=$encoded'),
+      Uri.parse('https://wa.me/$cleanPhone?text=$encoded'),
+      Uri.parse('https://api.whatsapp.com/send?phone=$cleanPhone&text=$encoded'),
+    ];
+
+    if (kIsWeb) {
+      return launchUrl(uris[1], mode: LaunchMode.platformDefault);
     }
 
-    return launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
+    for (final uri in uris) {
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (launched) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  static String _normalizePhone(String phone) {
+    final digits = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.startsWith('00')) {
+      return digits.substring(2);
+    }
+    return digits;
   }
 }

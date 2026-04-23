@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,6 +20,7 @@ class AntiqueShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cartCount = ref.watch(cartItemsCountProvider);
     final location = GoRouterState.of(context).uri.toString();
+    const showAdminTools = !kIsWeb;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -70,7 +72,10 @@ class AntiqueShell extends ConsumerWidget {
               top: false,
               child: Column(
                 children: [
-                  _TopNavigation(location: location),
+                  _TopNavigation(
+                    location: location,
+                    showAdminTools: showAdminTools,
+                  ),
                   Expanded(child: child),
                 ],
               ),
@@ -162,9 +167,13 @@ class _BrandLockup extends StatelessWidget {
 }
 
 class _TopNavigation extends StatelessWidget {
-  const _TopNavigation({required this.location});
+  const _TopNavigation({
+    required this.location,
+    required this.showAdminTools,
+  });
 
   final String location;
+  final bool showAdminTools;
 
   @override
   Widget build(BuildContext context) {
@@ -172,32 +181,30 @@ class _TopNavigation extends StatelessWidget {
       (title: 'الرئيسية', route: '/', icon: Icons.home_rounded),
       (title: 'المنتجات', route: '/shop', icon: Icons.storefront_rounded),
       (title: 'السلة', route: '/cart', icon: Icons.shopping_bag_rounded),
-      (title: 'الإحصائيات', route: '/stats', icon: Icons.query_stats_rounded),
+      if (showAdminTools) ...[
+        (title: 'الإدارة', route: '/admin', icon: Icons.add_business_rounded),
+        (title: 'الإحصائيات', route: '/stats', icon: Icons.query_stats_rounded),
+      ],
     ];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 460;
-          return Row(
-            children: [
-              for (final item in items)
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: _NavButton(
-                      title: item.title,
-                      icon: item.icon,
-                      compact: compact,
-                      selected: location == item.route,
-                      onTap: () => context.go(item.route),
-                    ),
-                  ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (final item in items)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: 8),
+                child: _NavButton(
+                  title: item.title,
+                  icon: item.icon,
+                  selected: location == item.route,
+                  onTap: () => context.go(item.route),
                 ),
-            ],
-          );
-        },
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -207,45 +214,39 @@ class _NavButton extends StatelessWidget {
   const _NavButton({
     required this.title,
     required this.icon,
-    required this.compact,
     required this.selected,
     required this.onTap,
   });
 
   final String title;
   final IconData icon;
-  final bool compact;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? AppTheme.wood : Colors.white.withValues(alpha: 0.82),
+      color: selected ? AppTheme.wood : Colors.white.withValues(alpha: 0.88),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: compact ? 10 : 12, horizontal: 8),
-          child: compact
-              ? Icon(icon, color: selected ? Colors.white : AppTheme.bronze)
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(icon, size: 18, color: selected ? Colors.white : AppTheme.bronze),
-                    const SizedBox(height: 4),
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: selected ? Colors.white : AppTheme.bronze,
-                            fontWeight: FontWeight.w700,
-                          ),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: selected ? Colors.white : AppTheme.bronze),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: selected ? Colors.white : AppTheme.bronze,
+                      fontWeight: FontWeight.w700,
                     ),
-                  ],
-                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

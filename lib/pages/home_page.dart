@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -34,19 +34,42 @@ class _HomePageState extends ConsumerState<HomePage> {
         children: [
           const HeroBanner(),
           const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'منتجات مختارة',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-              ),
-              OutlinedButton(
-                onPressed: () => context.go('/shop'),
-                child: const Text('عرض الكل'),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 460;
+
+              if (compact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'منتجات مختارة',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    OutlinedButton(
+                      onPressed: () => context.go('/shop'),
+                      child: const Text('عرض الكل'),
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'منتجات مختارة',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                  ),
+                  OutlinedButton(
+                    onPressed: () => context.go('/shop'),
+                    child: const Text('عرض الكل'),
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: AppSpacing.md),
           if (catalog.isLoading)
@@ -58,7 +81,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             )
           else if (featured.isEmpty)
             EmptyStateCard(
-              title: 'لا توجد منتجات حالياً',
+              title: 'لا توجد منتجات حاليًا',
               message: 'أضف قطع أنتيكا جديدة لتظهر هنا مباشرة.',
               actionLabel: 'الانتقال للمتجر',
               onAction: () => context.go('/shop'),

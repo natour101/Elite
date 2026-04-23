@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../components/antique_shell.dart';
+import '../../pages/admin_upload_page.dart';
 import '../../pages/cart_page.dart';
 import '../../pages/home_page.dart';
 import '../../pages/product_details_page.dart';
@@ -10,6 +12,8 @@ import '../../pages/shop_page.dart';
 import '../../pages/stats_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
+  const adminRoutesEnabled = !kIsWeb;
+
   return GoRouter(
     initialLocation: '/',
     routes: [
@@ -46,13 +50,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               child: const CartPage(),
             ),
           ),
-          GoRoute(
-            path: '/stats',
-            pageBuilder: (context, state) => _fadePage(
-              state: state,
-              child: const StatsPage(),
+          if (adminRoutesEnabled)
+            GoRoute(
+              path: '/admin',
+              pageBuilder: (context, state) => _fadePage(
+                state: state,
+                child: const AdminUploadPage(),
+              ),
             ),
-          ),
+          if (adminRoutesEnabled)
+            GoRoute(
+              path: '/stats',
+              pageBuilder: (context, state) => _fadePage(
+                state: state,
+                child: const StatsPage(),
+              ),
+            ),
         ],
       ),
     ],
@@ -81,3 +94,4 @@ CustomTransitionPage<void> _fadePage({
     },
   );
 }
+

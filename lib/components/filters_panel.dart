@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../controllers/store_controller.dart';
@@ -45,17 +45,19 @@ class _FiltersPanelState extends ConsumerState<FiltersPanel> {
     final eras = ref.watch(erasProvider);
 
     return SectionCard(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('فلترة المجموعة', style: Theme.of(context).textTheme.headlineMedium),
+          Text('فلترة المنتجات', style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: AppSpacing.md),
           LayoutBuilder(
             builder: (context, constraints) {
-              final wide = constraints.maxWidth >= 980;
-              final children = [
-                Expanded(
-                  flex: 3,
+              final wide = constraints.maxWidth >= 900;
+
+              final topFields = [
+                SizedBox(
+                  width: wide ? constraints.maxWidth * 0.38 : double.infinity,
                   child: TextField(
                     controller: _searchController,
                     onChanged: ref.read(productFiltersProvider.notifier).setQuery,
@@ -65,14 +67,17 @@ class _FiltersPanelState extends ConsumerState<FiltersPanel> {
                     ),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.md, height: AppSpacing.md),
-                Expanded(
-                  flex: 2,
+                SizedBox(
+                  width: wide ? constraints.maxWidth * 0.26 : double.infinity,
                   child: DropdownButtonFormField<String>(
+                    key: ValueKey('category-${filters.category ?? 'all'}'),
                     initialValue: filters.category,
                     decoration: const InputDecoration(labelText: 'التصنيف'),
                     items: [
-                      const DropdownMenuItem<String>(value: null, child: Text('كل التصنيفات')),
+                      const DropdownMenuItem<String>(
+                        value: null,
+                        child: Text('كل التصنيفات'),
+                      ),
                       ...categories.map(
                         (category) => DropdownMenuItem<String>(
                           value: category,
@@ -83,14 +88,17 @@ class _FiltersPanelState extends ConsumerState<FiltersPanel> {
                     onChanged: ref.read(productFiltersProvider.notifier).setCategory,
                   ),
                 ),
-                const SizedBox(width: AppSpacing.md, height: AppSpacing.md),
-                Expanded(
-                  flex: 2,
+                SizedBox(
+                  width: wide ? constraints.maxWidth * 0.26 : double.infinity,
                   child: DropdownButtonFormField<String>(
+                    key: ValueKey('era-${filters.era ?? 'all'}'),
                     initialValue: filters.era,
                     decoration: const InputDecoration(labelText: 'النوع / الحقبة'),
                     items: [
-                      const DropdownMenuItem<String>(value: null, child: Text('كل الأنواع')),
+                      const DropdownMenuItem<String>(
+                        value: null,
+                        child: Text('كل الأنواع'),
+                      ),
                       ...eras.map(
                         (era) => DropdownMenuItem<String>(
                           value: era,
@@ -105,14 +113,19 @@ class _FiltersPanelState extends ConsumerState<FiltersPanel> {
 
               return Column(
                 children: [
-                  if (wide)
-                    Row(children: children)
-                  else
-                    ...children.expand((widget) => [widget]),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: topFields,
+                  ),
                   const SizedBox(height: AppSpacing.md),
-                  Row(
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Expanded(
+                      SizedBox(
+                        width: wide ? constraints.maxWidth * 0.25 : double.infinity,
                         child: TextField(
                           controller: _minPriceController,
                           keyboardType: TextInputType.number,
@@ -124,8 +137,8 @@ class _FiltersPanelState extends ConsumerState<FiltersPanel> {
                           },
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
+                      SizedBox(
+                        width: wide ? constraints.maxWidth * 0.25 : double.infinity,
                         child: TextField(
                           controller: _maxPriceController,
                           keyboardType: TextInputType.number,
@@ -137,7 +150,6 @@ class _FiltersPanelState extends ConsumerState<FiltersPanel> {
                           },
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.md),
                       OutlinedButton(
                         onPressed: () {
                           ref.read(productFiltersProvider.notifier).reset();
